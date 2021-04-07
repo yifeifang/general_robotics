@@ -39,6 +39,6 @@ git commit -m "First commit"
 git push
 
 ```
-Note: if it is newly created branch run ?git push --set-upstream origin zhitaoyu/testGitHub? to push your changes. 
+Note: if it is newly created branch run 'git push --set-upstream origin zhitaoyu/testGitHub' to push your changes. 
 
 
