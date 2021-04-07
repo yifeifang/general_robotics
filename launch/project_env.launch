@@ -1,0 +1,25 @@
+<launch>
+
+  <arg name="robot" default="fetch"/>
+  <arg name="debug" default="false"/>
+  <arg name="gui" default="true"/>
+  <arg name="headless" default="false"/>
+  <arg name="world" default="worlds/empty.world"/> 
+  <!-- Note: the world_name is with respect to GAZEBO_RESOURCE_PATH environmental variable (/opt/share/gazebo-9/) -->
+  <!-- Note2: to include fetchit_challenge worlds change default to: "$(find fetchit_challenge)/worlds/fetchit_challenge_simple.world" --> 
+  <!-- Note3: to change world from the terminal substitute $(find ...) for $HOME/catkin_ws/src/... -->
+
+  <!-- Start Gazebo with a blank world -->
+  <include file="$(find gazebo_ros)/launch/empty_world.launch">
+    <arg name="debug" value="$(arg debug)" />
+    <arg name="gui" value="$(arg gui)" />
+    <arg name="paused" value="false"/>
+    <arg name="use_sim_time" value="true"/>
+    <arg name="headless" value="$(arg headless)"/>
+    <arg name="world_name" value="$(arg world)"/>
+  </include>
+
+  <!-- Oh, you wanted a robot? -->
+  <include file="$(find fetch_gazebo)/launch/include/$(arg robot).launch.xml" />
+
+</launch>
