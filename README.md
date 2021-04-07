@@ -5,7 +5,7 @@
 
 1. Git clone the repo
 ```
-*git clone <Input the HTTPS of the repo>
+git clone <Input the HTTPS of the repo>
 ```
 here it should be
 ```
