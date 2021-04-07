@@ -4,7 +4,9 @@
 ## Working in this repo
 
 1. Git clone the repo
+```
 *git clone <Input the HTTPS of the repo>
+```
 here it should be
 ```
 git clone https://github.com/ironmanyu/robotics_labs.git
