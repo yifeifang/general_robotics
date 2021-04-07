@@ -1,5 +1,5 @@
 <package>
-  <name>fetch_gazebo_demo</name>
+  <name>robotics_labs</name>
   <version>0.9.2</version>
   <description>
     Demos for fetch_gazebo package.
