@@ -23,7 +23,7 @@
         <pose frame=''>0.0 0.0 0 0 -0 0</pose>
         <geometry>
           <mesh>
-            <uri><PATH_TO_MODELS>floorplan/meshes/gix216plus.dae</uri>
+            <uri>/home/dewey/517/LabGit/src/robotics_labs/models/floorplan/meshes/gix216plus.dae</uri>
           </mesh>
         </geometry>
         <transparency>0</transparency>
@@ -35,7 +35,7 @@
         <pose frame=''>0.0 0.0 0 0 -0 0</pose>
         <geometry>
           <mesh>
-            <uri><PATH_TO_MODELS>/floorplan/meshes/gix216plus.dae</uri>
+            <uri>/home/dewey/517/LabGit/src/robotics_labs/models/floorplan/meshes/gix216plus.dae</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>

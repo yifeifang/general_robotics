@@ -108,7 +108,7 @@
           <pose frame=''>0 0 0 0 -0 0</pose>
           <geometry>
             <mesh>
-              <uri><PATH_TO_MODELS>/floorplan/meshes/gix216plus.dae</uri>
+              <uri>/home/dewey/517/LabGit/src/robotics_labs/models/floorplan/meshes/gix216plus.dae</uri>
             </mesh>
           </geometry>
           <transparency>0</transparency>
@@ -120,7 +120,7 @@
           <pose frame=''>0 0 0 0 -0 0</pose>
           <geometry>
             <mesh>
-              <uri><PATH_TO_MODELS>/floorplan/meshes/gix216plus.dae</uri>
+              <uri>/home/dewey/517/LabGit/src/robotics_labs/models/floorplan/meshes/gix216plus.dae</uri>
               <scale>1 1 1</scale>
             </mesh>
           </geometry>
@@ -176,10 +176,10 @@
       <pose frame=''>0.114781 1.25528 0 0 -0 0</pose>
     </model>
     <state world_name='default'>
-      <sim_time>90 314000000</sim_time>
+      <!-- <sim_time>90 314000000</sim_time>
       <real_time>90 739389240</real_time>
       <wall_time>1618368346 445881376</wall_time>
-      <iterations>90314</iterations>
+      <iterations>90314</iterations> -->
       <model name='floorplan'>
         <pose frame=''>0 2 0 0 -0 0</pose>
         <scale>1 1 1</scale>
