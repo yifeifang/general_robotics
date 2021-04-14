@@ -176,6 +176,7 @@
       <pose frame=''>0.114781 1.25528 0 0 -0 0</pose>
     </model>
     <state world_name='default'>
+      <!-- comment out does get away error -->
       <!-- <sim_time>90 314000000</sim_time>
       <real_time>90 739389240</real_time>
       <wall_time>1618368346 445881376</wall_time>
