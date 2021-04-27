@@ -38,7 +38,7 @@ def main():
     target_frame = 'base_link'
 
     # define a source point
-    point_wrt_source = Point(0.1, 1.2, 2.3)
+    point_wrt_source = Point(0, 0, 2.3)
 
     transformation = get_transformation(source_frame, target_frame)
     point_wrt_target = transform_point(transformation, point_wrt_source)
