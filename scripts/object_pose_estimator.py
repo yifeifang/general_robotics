@@ -93,7 +93,7 @@ def main():
     transformation = get_transformation(source_frame, target_frame)
     point_wrt_target = transform_point(transformation, camP)
 
-    print point_wrt_target
+    print "point_wrt_target = ", point_wrt_target
 
     #Options: 
     # 1) publish point_wrt_target in a Publisher for another node to move the arm
