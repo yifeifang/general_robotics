@@ -48,15 +48,16 @@ pose_goal.orientation.x = target_q[0]
 pose_goal.orientation.y = target_q[1]
 pose_goal.orientation.z = target_q[2]
 pose_goal.orientation.w = target_q[3]
-pose_goal.position.x = 0.8
-pose_goal.position.y = 0.037
-pose_goal.position.z = 0.7
+pose_goal.position.x = 0.6646391416379281
+pose_goal.position.y = -0.003432746933112532
+pose_goal.position.z = 0.8
 
 # mypose = move_group.get_current_pose().pose
 # mypose.position.z += 1
 move_group.set_pose_target(pose_goal)
 
-move_group.go(wait=True)
+myplan = move_group.plan()
+move_group.execute(myplan)
 # Calling `stop()` ensures that there is no residual movement
 move_group.stop()
 # It is always good to clear your targets after planning with poses.
