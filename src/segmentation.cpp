@@ -60,19 +60,7 @@ void callback(const PointCloud::ConstPtr& cloud)
   pcl::toROSMsg(*cloud_cluster, output);
   output.header.frame_id = "head_camera_rgb_optical_frame"; 
 
-  // cloud_cluster->header.frame_id = "head_camera_link"; // probably head camera
-  // cloud_cluster->height = cloud_cluster->width = 1;
-  // pcl_conversions::toPCL(ros::Time::now(), cloud_cluster->header.stamp);
-
-  // PointCloud::Ptr msg (new PointCloud);
-  // msg->header.frame_id = "some_tf_frame";
-  // msg->height = msg->width = 1;
-  // msg->points.push_back (pcl::PointXYZ(1.0, 2.0, 3.0));
-
   pub.publish (output);
-  // printf ("Cloud: width = %d, height = %d\n", msg->width, msg->height);
-  // BOOST_FOREACH (const pcl::PointXYZ& pt, msg->points)
-  //   printf ("\t(%f, %f, %f)\n", pt.x, pt.y, pt.z);
 }
 
 int main(int argc, char** argv)
