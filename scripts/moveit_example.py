@@ -48,9 +48,14 @@ pose_goal.orientation.x = target_q[0]
 pose_goal.orientation.y = target_q[1]
 pose_goal.orientation.z = target_q[2]
 pose_goal.orientation.w = target_q[3]
-pose_goal.position.x = 0.6646391416379281
-pose_goal.position.y = -0.003432746933112532
-pose_goal.position.z = 0.8
+
+# pose_goal.orientation.x = -0.30883
+# pose_goal.orientation.y = 0.6097
+# pose_goal.orientation.z = 0.32759
+# pose_goal.orientation.w = 0.65236
+pose_goal.position.x = 0.7
+pose_goal.position.y = 0
+pose_goal.position.z = 0.9
 
 # mypose = move_group.get_current_pose().pose
 # mypose.position.z += 1
