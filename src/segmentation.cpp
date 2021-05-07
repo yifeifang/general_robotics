@@ -1,59 +1,85 @@
-#include "ros/ros.h"
-#include "std_msgs/String.h"
-#include "pcl_ros/point_cloud.h"
+#include <ros/ros.h>
+#include <pcl_ros/point_cloud.h>
+#include <boost/foreach.hpp>
 
-/**
- * This tutorial demonstrates simple receipt of messages over the ROS system.
- */
-void chatterCallback(const std_msgs::String::ConstPtr& msg)
+#include <pcl/ModelCoefficients.h>
+#include <pcl/point_types.h>
+#include <pcl/io/pcd_io.h>
+#include <pcl/filters/extract_indices.h>
+#include <pcl/filters/voxel_grid.h>
+#include <pcl/features/normal_3d.h>
+#include <pcl/kdtree/kdtree.h>
+#include <pcl/sample_consensus/method_types.h>
+#include <pcl/sample_consensus/model_types.h>
+#include <pcl/segmentation/sac_segmentation.h>
+#include <pcl/segmentation/extract_clusters.h>
+
+typedef pcl::PointCloud<pcl::PointXYZ> PointCloud;
+
+// not good practice
+ros::Publisher pub;
+
+void callback(const PointCloud::ConstPtr& cloud)
 {
-  ROS_INFO("I heard: [%s]", msg->data.c_str());
+  pcl::ModelCoefficients::Ptr coefficients (new pcl::ModelCoefficients);
+  pcl::PointIndices::Ptr inliers (new pcl::PointIndices);
+  // Create the segmentation object
+  pcl::SACSegmentation<pcl::PointXYZ> seg;
+  // Optional
+  seg.setOptimizeCoefficients (true);
+  // Mandatory
+  seg.setModelType (pcl::SACMODEL_PLANE);
+  seg.setMethodType (pcl::SAC_RANSAC);
+  seg.setDistanceThreshold (0.01);
+
+  seg.setInputCloud (cloud);
+  seg.segment (*inliers, *coefficients);
+
+  if (inliers->indices.size () == 0)
+  {
+    PCL_ERROR ("Could not estimate a planar model for the given dataset.");
+    return;
+  }
+
+  std::cerr << "Model inliers: " << inliers->indices.size () << std::endl;
+
+  pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_cluster (new pcl::PointCloud<pcl::PointXYZ>);
+  for (std::vector<int>::const_iterator pit = inliers->indices.begin (); pit != inliers->indices.end (); ++pit)
+    cloud_cluster->push_back ((*cloud)[*pit]); //*
+  cloud_cluster->width = cloud_cluster->size ();
+  cloud_cluster->height = 1;
+  cloud_cluster->is_dense = true;
+
+  std::cout << "PointCloud representing the Cluster: " << cloud_cluster->size () << " data points." << std::endl;
+  // std::stringstream ss;
+  // ss << "cloud_cluster_0.pcd";
+  // pcl::PCDWriter writer;
+  // writer.write<pcl::PointXYZ> (ss.str (), *cloud_cluster, false);
+
+  sensor_msgs::PointCloud2 output;
+  pcl::toROSMsg(*cloud_cluster, output);
+  output.header.frame_id = "head_camera_link"; 
+
+  // cloud_cluster->header.frame_id = "head_camera_link"; // probably head camera
+  // cloud_cluster->height = cloud_cluster->width = 1;
+  // pcl_conversions::toPCL(ros::Time::now(), cloud_cluster->header.stamp);
+
+  // PointCloud::Ptr msg (new PointCloud);
+  // msg->header.frame_id = "some_tf_frame";
+  // msg->height = msg->width = 1;
+  // msg->points.push_back (pcl::PointXYZ(1.0, 2.0, 3.0));
+
+  pub.publish (output);
+  // printf ("Cloud: width = %d, height = %d\n", msg->width, msg->height);
+  // BOOST_FOREACH (const pcl::PointXYZ& pt, msg->points)
+  //   printf ("\t(%f, %f, %f)\n", pt.x, pt.y, pt.z);
 }
 
-int main(int argc, char **argv)
+int main(int argc, char** argv)
 {
-  /**
-   * The ros::init() function needs to see argc and argv so that it can perform
-   * any ROS arguments and name remapping that were provided at the command line.
-   * For programmatic remappings you can use a different version of init() which takes
-   * remappings directly, but for most command-line programs, passing argc and argv is
-   * the easiest way to do it.  The third argument to init() is the name of the node.
-   *
-   * You must call one of the versions of ros::init() before using any other
-   * part of the ROS system.
-   */
-  ros::init(argc, argv, "segmentation");
-
-  /**
-   * NodeHandle is the main access point to communications with the ROS system.
-   * The first NodeHandle constructed will fully initialize this node, and the last
-   * NodeHandle destructed will close down the node.
-   */
-  ros::NodeHandle n;
-
-  /**
-   * The subscribe() call is how you tell ROS that you want to receive messages
-   * on a given topic.  This invokes a call to the ROS
-   * master node, which keeps a registry of who is publishing and who
-   * is subscribing.  Messages are passed to a callback function, here
-   * called chatterCallback.  subscribe() returns a Subscriber object that you
-   * must hold on to until you want to unsubscribe.  When all copies of the Subscriber
-   * object go out of scope, this callback will automatically be unsubscribed from
-   * this topic.
-   *
-   * The second parameter to the subscribe() function is the size of the message
-   * queue.  If messages are arriving faster than they are being processed, this
-   * is the number of messages that will be buffered up before beginning to throw
-   * away the oldest ones.
-   */
-  ros::Subscriber sub = n.subscribe("chatter", 1000, chatterCallback);
-
-  /**
-   * ros::spin() will enter a loop, pumping callbacks.  With this version, all
-   * callbacks will be called from within this thread (the main one).  ros::spin()
-   * will exit when Ctrl-C is pressed, or the node is shutdown by the master.
-   */
+  ros::init(argc, argv, "sub_pcl");
+  ros::NodeHandle nh;
+  pub = nh.advertise<PointCloud> ("points2", 1);
+  ros::Subscriber sub = nh.subscribe<PointCloud>("/head_camera/depth_registered/points", 1, callback);
   ros::spin();
-
-  return 0;
 }
