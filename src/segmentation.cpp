@@ -58,7 +58,7 @@ void callback(const PointCloud::ConstPtr& cloud)
 
   sensor_msgs::PointCloud2 output;
   pcl::toROSMsg(*cloud_cluster, output);
-  output.header.frame_id = "head_camera_link"; 
+  output.header.frame_id = "head_camera_rgb_optical_frame"; 
 
   // cloud_cluster->header.frame_id = "head_camera_link"; // probably head camera
   // cloud_cluster->height = cloud_cluster->width = 1;
