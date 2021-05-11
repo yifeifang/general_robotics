@@ -53,13 +53,27 @@ pose_goal.orientation.w = target_q[3]
 # pose_goal.orientation.y = 0.6097
 # pose_goal.orientation.z = 0.32759
 # pose_goal.orientation.w = 0.65236
-pose_goal.position.x = 0.7
+pose_goal.position.x = 0.3
 pose_goal.position.y = 0
-pose_goal.position.z = 0.9
+pose_goal.position.z = 0.7
 
 # mypose = move_group.get_current_pose().pose
 # mypose.position.z += 1
 move_group.set_pose_target(pose_goal)
+
+# Maybe the robot planner didn't take it into account? Need to check move_group.launch
+# constraint = moveit_msgs.msg.Constraints()
+# constraint.name = "dewey grasp constraint"
+# orientation_constraint = moveit_msgs.msg.OrientationConstraint()
+# orientation_constraint.header.frame_id = "base_link"
+# orientation_constraint.link_name = "wrist_roll_link"
+# orientation_constraint.orientation = geometry_msgs.msg.Quaternion(target_q[0],target_q[1],target_q[2],target_q[3])
+# orientation_constraint.absolute_x_axis_tolerance = 0.001 #Allow max rotation of 45 degrees
+# orientation_constraint.absolute_y_axis_tolerance = 0.001 #Allow max rotation of 360 degrees
+# orientation_constraint.absolute_z_axis_tolerance = 0.001
+# orientation_constraint.weight = 1
+# constraint.orientation_constraints = [orientation_constraint]
+# move_group.set_path_constraints(constraint)
 
 myplan = move_group.plan()
 move_group.execute(myplan)
