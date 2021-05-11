@@ -44,6 +44,7 @@ print ""
 pose_goal = geometry_msgs.msg.Pose()
 target_q = tf.transformations.quaternion_from_euler(0.0, 3.14 / 2.0, 0.0)
 
+print "target Quaternion = ", target_q[0], target_q[1], target_q[2], target_q[3]
 pose_goal.orientation.x = target_q[0]
 pose_goal.orientation.y = target_q[1]
 pose_goal.orientation.z = target_q[2]
@@ -54,7 +55,7 @@ pose_goal.orientation.w = target_q[3]
 # pose_goal.orientation.z = 0.32759
 # pose_goal.orientation.w = 0.65236
 pose_goal.position.x = 0.3
-pose_goal.position.y = 0.0
+pose_goal.position.y = 0
 pose_goal.position.z = 0.8
 
 # mypose = move_group.get_current_pose().pose
@@ -62,20 +63,34 @@ pose_goal.position.z = 0.8
 move_group.set_pose_target(pose_goal)
 
 # Maybe the robot planner didn't take it into account? Need to check move_group.launch
+# Check https://github.com/ros-planning/moveit/pull/541 for detail problem due to 
+# fetch_moveit_config/config/ompl_planner.yaml is modified
+# Check if sampling in JointModelStateSpace is enforced for this group by user.
+# This is done by setting 'enforce_joint_model_state_space' to 'true' for the desired group in ompl_planning.yaml.
+
+# Some planning problems like orientation path constraints are represented in PoseModelStateSpace and sampled via IK.
+# However consecutive IK solutions are not checked for proximity at the moment and sometimes happen to be flipped,
+# leading to invalid trajectories. This workaround lets the user prevent this problem by forcing rejection sampling
+# in JointModelStateSpace.
+
 constraint = moveit_msgs.msg.Constraints()
 constraint.name = "dewey grasp constraint"
 orientation_constraint = moveit_msgs.msg.OrientationConstraint()
 orientation_constraint.header.frame_id = "base_link"
 orientation_constraint.link_name = "wrist_roll_link"
 orientation_constraint.orientation = geometry_msgs.msg.Quaternion(target_q[0],target_q[1],target_q[2],target_q[3])
-orientation_constraint.absolute_x_axis_tolerance = 0.0000000001
-orientation_constraint.absolute_y_axis_tolerance = 0.0000000001
-orientation_constraint.absolute_z_axis_tolerance = 0.0000000001
+# It looks like it didn't took value < 0.1 into account need to investigate
+# in to ompl source for more info
+orientation_constraint.absolute_x_axis_tolerance = 0.1
+orientation_constraint.absolute_y_axis_tolerance = 0.1
+orientation_constraint.absolute_z_axis_tolerance = 0.1
 orientation_constraint.weight = 1
 constraint.orientation_constraints.append(orientation_constraint)
 move_group.set_path_constraints(constraint)
 
-move_group.set_planning_time(15)
+move_group.set_start_state(move_group.get_current_state())
+
+# move_group.set_planning_time(15)
 myplan = move_group.plan()
 
 myc = move_group.get_path_constraints()
