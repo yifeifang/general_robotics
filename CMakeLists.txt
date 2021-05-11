@@ -1,8 +1,31 @@
 cmake_minimum_required(VERSION 3.7.2)
 project(robotics_labs)
 
-find_package(catkin REQUIRED COMPONENTS roscpp rospy std_msgs genmsg pcl_conversions pcl_ros)
+find_package(catkin REQUIRED 
+  COMPONENTS 
+  roscpp 
+  rospy 
+  std_msgs 
+  genmsg 
+  pcl_conversions 
+  pcl_ros
+  interactive_markers
+  moveit_core
+  moveit_ros_planning
+  moveit_ros_planning_interface
+  moveit_ros_perception
+  rviz_visual_tools
+  moveit_visual_tools
+  pluginlib
+  geometric_shapes
+  rosbag
+  tf2_ros
+  tf2_eigen
+  tf2_geometry_msgs)
 catkin_package()
+
+find_package(Eigen3 REQUIRED)
+find_package(Boost REQUIRED system filesystem date_time thread)
 
 include_directories(include ${catkin_INCLUDE_DIRS})
 
@@ -20,3 +43,7 @@ install(
 add_executable(segmentation src/segmentation.cpp)
 target_link_libraries(segmentation ${catkin_LIBRARIES})
 add_dependencies(segmentation ${catkin_EXPORTED_TARGETS})
+
+
+add_executable(motionplan src/motionplan.cpp)
+target_link_libraries(motionplan ${catkin_LIBRARIES} ${Boost_LIBRARIES})
