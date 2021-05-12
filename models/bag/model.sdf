@@ -1,0 +1,36 @@
+<?xml version='1.0' ?>
+<sdf version='1.6'>
+  <model name='bag'>
+    <static>true</static>
+    <link name='link'>
+      <inertial>
+        <pose>0 0 0 0 0 0</pose>
+        <inertia>
+          <ixx>1</ixx>
+          <ixy>1</ixy>
+          <ixz>1</ixz>
+          <iyy>1</iyy>
+          <iyz>1</iyz>
+          <izz>1</izz>
+        </inertia>
+        <mass>1</mass>
+      </inertial>
+      <collision name='collision'>
+        <geometry>
+          <mesh>
+            <uri>/home/dewey/517/src/robotics_labs/models/bag/meshs/bag.dae</uri>
+            <scale> 1.0 1.0 1.0 </scale>
+          </mesh>
+        </geometry>
+      </collision>
+      <visual name='visual'>
+        <geometry>
+          <mesh>
+            <uri>/home/dewey/517/src/robotics_labs/models/bag/meshs/bag.dae</uri>
+            <scale> 1.0 1.0 1.0 </scale>
+          </mesh>
+        </geometry>
+      </visual>
+    </link>
+  </model>
+</sdf>
