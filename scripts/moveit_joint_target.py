@@ -41,26 +41,19 @@ print "============ Printing robot state"
 print robot.get_current_state()
 print ""
 
-pose_goal = geometry_msgs.msg.Pose()
 target_q = tf.transformations.quaternion_from_euler(0.0, 3.14 / 2.0, 0.0)
 
-print "target Quaternion = ", target_q[0], target_q[1], target_q[2], target_q[3]
-pose_goal.orientation.x = target_q[0]
-pose_goal.orientation.y = target_q[1]
-pose_goal.orientation.z = target_q[2]
-pose_goal.orientation.w = target_q[3]
+joint_goal = move_group.get_current_joint_values()
+joint_goal[0] = 0.0857168138027
+joint_goal[1] = -1.58481834789
+joint_goal[2] = 0.433445118112
+joint_goal[3] = -1.53769913621
+joint_goal[4] = 1.80451970107
+joint_goal[5] = 2.0000173681
+joint_goal[6] = 1.63692856729
+joint_goal[7] = 2.86215073034
 
-# pose_goal.orientation.x = -0.30883
-# pose_goal.orientation.y = 0.6097
-# pose_goal.orientation.z = 0.32759
-# pose_goal.orientation.w = 0.65236
-pose_goal.position.x = 0.8
-pose_goal.position.y = 0
-pose_goal.position.z = 0.8
-
-# mypose = move_group.get_current_pose().pose
-# mypose.position.z += 1
-move_group.set_pose_target(pose_goal)
+move_group.set_joint_value_target(joint_goal)
 
 # Maybe the robot planner didn't take it into account? Need to check move_group.launch
 # Check https://github.com/ros-planning/moveit/pull/541 for detail problem due to 
@@ -93,11 +86,6 @@ move_group.set_start_state(move_group.get_current_state())
 move_group.set_planning_time(15)
 myplan = move_group.plan()
 
-# myc = move_group.get_path_constraints()
-
 move_group.execute(myplan)
 # Calling `stop()` ensures that there is no residual movement
 move_group.stop()
-# It is always good to clear your targets after planning with poses.
-# Note: there is no equivalent function for clear_joint_value_targets()
-move_group.clear_pose_targets()
