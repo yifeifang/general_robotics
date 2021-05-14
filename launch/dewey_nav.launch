@@ -1,0 +1,10 @@
+<launch>
+    <node name="map_server" pkg="map_server" type="map_server" args="/home/dewey/Desktop/517Labs/Lab3/gix.yaml" output="screen" />
+
+    <node pkg="amcl" type="amcl" name="amcl" output="screen" >
+        <remap from="scan" to="base_scan" />
+        <remap from="map" to="map" />
+        <param name="use_map_topic"  value="false" />
+        <rosparam file="$(find robotics_labs)/config/amcl.yaml" command="load" />
+    </node>
+</launch>
