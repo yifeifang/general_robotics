@@ -1,19 +1,19 @@
 <?xml version='1.0' ?>
 <sdf version='1.6'>
   <model name='bag'>
-    <static>true</static>
+    <static>0</static>
     <link name='link'>
       <inertial>
         <pose>0 0 0 0 0 0</pose>
+        <mass>0.25</mass>
         <inertia>
-          <ixx>1</ixx>
-          <ixy>1</ixy>
-          <ixz>1</ixz>
-          <iyy>1</iyy>
-          <iyz>1</iyz>
-          <izz>1</izz>
+          <ixx>0.001</ixx>
+          <ixy>0.000000</ixy>
+          <ixz>0.000000</ixz>
+          <iyy>0.001</iyy>
+          <iyz>0.000000</iyz>
+          <izz>0.001</izz>
         </inertia>
-        <mass>1</mass>
       </inertial>
       <collision name='collision'>
         <geometry>
@@ -22,6 +22,22 @@
             <scale> 1.0 1.0 1.0 </scale>
           </mesh>
         </geometry>
+        <surface>
+            <friction>
+              <ode>
+                <mu>30.0</mu>
+                <mu2>30.0</mu2>
+              </ode>
+            </friction>
+            <contact>
+              <ode>
+                <kp>1000000.0</kp>
+                <kd>100.0</kd>
+                <max_vel>1.0</max_vel>
+                <min_depth>0.002</min_depth>
+              </ode>
+            </contact>
+          </surface>
       </collision>
       <visual name='visual'>
         <geometry>
@@ -31,6 +47,13 @@
           </mesh>
         </geometry>
       </visual>
+      <velocity_decay>
+        <linear>0.000000</linear>
+        <angular>0.000000</angular>
+      </velocity_decay>
+      <self_collide>0</self_collide>
+      <kinematic>0</kinematic>
+      <gravity>1</gravity>
     </link>
   </model>
 </sdf>

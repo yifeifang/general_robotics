@@ -44,6 +44,13 @@ add_executable(segmentation src/segmentation.cpp)
 target_link_libraries(segmentation ${catkin_LIBRARIES})
 add_dependencies(segmentation ${catkin_EXPORTED_TARGETS})
 
+add_executable(segment_door src/segment_door.cpp)
+target_link_libraries(segment_door ${catkin_LIBRARIES})
+add_dependencies(segment_door ${catkin_EXPORTED_TARGETS})
+
+add_executable(segment_object src/segment_object.cpp)
+target_link_libraries(segment_object ${catkin_LIBRARIES})
+add_dependencies(segment_object ${catkin_EXPORTED_TARGETS})
 
 add_executable(motionplan src/motionplan.cpp)
 target_link_libraries(motionplan ${catkin_LIBRARIES} ${Boost_LIBRARIES})
