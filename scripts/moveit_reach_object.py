@@ -8,8 +8,10 @@ from math import pi
 from std_msgs.msg import String
 from moveit_commander.conversions import pose_to_list
 import tf
+from tf.transformations import *
 import tf2_ros
 import tf2_geometry_msgs
+import numpy as np
 
 moveit_commander.roscpp_initialize(sys.argv)
 rospy.init_node('move_group_python_interface_tutorial', anonymous=True)
@@ -64,7 +66,9 @@ print pose_transformed.pose.position.x
 print pose_transformed.pose.position.y
 print pose_transformed.pose.position.z
 
-target_q = tf.transformations.quaternion_from_euler(0.0, 3.14 / 2.0, 0.0)
+angles = euler_from_quaternion([pose_transformed.pose.orientation.x, pose_transformed.pose.orientation.y, pose_transformed.pose.orientation.z, pose_transformed.pose.orientation.w])
+target_q = tf.transformations.quaternion_from_euler(0.0, 3.14 / 2.0, angles[2])
+
 pose_transformed.pose.orientation.x = target_q[0]
 pose_transformed.pose.orientation.y = target_q[1]
 pose_transformed.pose.orientation.z = target_q[2]
@@ -83,25 +87,25 @@ move_group.set_pose_target(pose_transformed)
 # leading to invalid trajectories. This workaround lets the user prevent this problem by forcing rejection sampling
 # in JointModelStateSpace.
 
-constraint = moveit_msgs.msg.Constraints()
-constraint.name = "dewey grasp constraint"
-orientation_constraint = moveit_msgs.msg.OrientationConstraint()
-orientation_constraint.header.frame_id = "base_link"
-orientation_constraint.link_name = "wrist_roll_link"
-orientation_constraint.orientation = geometry_msgs.msg.Quaternion(pose_transformed.pose.orientation.x,
-                                                                  pose_transformed.pose.orientation.y,
-                                                                  pose_transformed.pose.orientation.z,
-                                                                  pose_transformed.pose.orientation.w)
-# It looks like it didn't took value < 0.1 into account need to investigate
-# in to ompl source for more info
-orientation_constraint.absolute_x_axis_tolerance = 0.1
-orientation_constraint.absolute_y_axis_tolerance = 0.1
-orientation_constraint.absolute_z_axis_tolerance = 0.1
-orientation_constraint.weight = 1
-constraint.orientation_constraints.append(orientation_constraint)
-move_group.set_path_constraints(constraint)
+# constraint = moveit_msgs.msg.Constraints()
+# constraint.name = "dewey grasp constraint"
+# orientation_constraint = moveit_msgs.msg.OrientationConstraint()
+# orientation_constraint.header.frame_id = "base_link"
+# orientation_constraint.link_name = "wrist_roll_link"
+# orientation_constraint.orientation = geometry_msgs.msg.Quaternion(pose_transformed.pose.orientation.x,
+#                                                                   pose_transformed.pose.orientation.y,
+#                                                                   pose_transformed.pose.orientation.z,
+#                                                                   pose_transformed.pose.orientation.w)
+# # It looks like it didn't took value < 0.1 into account need to investigate
+# # in to ompl source for more info
+# orientation_constraint.absolute_x_axis_tolerance = 0.1
+# orientation_constraint.absolute_y_axis_tolerance = 0.1
+# orientation_constraint.absolute_z_axis_tolerance = 0.1
+# orientation_constraint.weight = 1
+# constraint.orientation_constraints.append(orientation_constraint)
+# move_group.set_path_constraints(constraint)
 
-move_group.set_start_state(move_group.get_current_state())
+# move_group.set_start_state(move_group.get_current_state())
 
 move_group.set_planning_time(15)
 myplan = move_group.plan()
