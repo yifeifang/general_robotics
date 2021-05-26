@@ -12,6 +12,7 @@ from tf.transformations import *
 import tf2_ros
 import tf2_geometry_msgs
 import numpy as np
+import time
 
 moveit_commander.roscpp_initialize(sys.argv)
 rospy.init_node('move_group_python_interface_tutorial', anonymous=True)
@@ -19,32 +20,6 @@ robot = moveit_commander.RobotCommander()
 scene = moveit_commander.PlanningSceneInterface()
 group_name = "arm_with_torso"
 move_group = moveit_commander.MoveGroupCommander(group_name)
-
-# We can get the name of the reference frame for this robot:
-planning_frame = move_group.get_planning_frame()
-print "============ Planning frame: %s" % planning_frame
-
-# We can also print the name of the end-effector link for this group:
-eef_link = move_group.get_end_effector_link()
-print "============ End effector link: %s" % eef_link
-
-# # Set end effector
-# move_group.set_end_effector_link('wrist_flex_link')
-
-# We can also print the name of the end-effector link for this group:
-eef_link = move_group.get_end_effector_link()
-print "============ End effector link: %s" % eef_link
-
-# We can get a list of all the groups in the robot:
-group_names = robot.get_group_names()
-print "============ Available Planning Groups:", robot.get_group_names()
-
-# Sometimes for debugging it is useful to print the entire state of the
-# robot:
-print "============ Printing robot state"
-print robot.get_current_state()
-print ""
-
 
 tf_buffer = tf2_ros.Buffer(rospy.Duration(1200.0)) #tf buffer length
 tf_listener = tf2_ros.TransformListener(tf_buffer)
@@ -113,6 +88,30 @@ myplan = move_group.plan()
 # myc = move_group.get_path_constraints()
 
 move_group.execute(myplan)
+# # Calling `stop()` ensures that there is no residual movement
+# move_group.stop()
+# # It is always good to clear your targets after planning with poses.
+# # Note: there is no equivalent function for clear_joint_value_targets()
+# move_group.clear_pose_targets()
+
+time.sleep(3)
+
+waypoints = []
+wpose = move_group.get_current_pose().pose
+wpose.position.z -= 0.1
+waypoints.append(copy.deepcopy(wpose))
+
+wpose = move_group.get_current_pose().pose
+wpose.position.z -= 0.2
+waypoints.append(copy.deepcopy(wpose))
+
+(plan, fraction) = move_group.compute_cartesian_path(
+                                   waypoints,   # waypoints to follow
+                                   0.01,        # eef_step
+                                   0.0,
+                                   False)         # jump_threshold
+
+move_group.execute(plan)
 # Calling `stop()` ensures that there is no residual movement
 move_group.stop()
 # It is always good to clear your targets after planning with poses.

@@ -46,24 +46,24 @@ target_q = tf.transformations.quaternion_from_euler(0.0, 3.14 / 2.0, 0.0)
 joint_goal = move_group.get_current_joint_values()
 
 # #Joint pose for arm on the side 
-# joint_goal[0] = 0.0857168138027
-# joint_goal[1] = -1.58481834789
-# joint_goal[2] = 0.433445118112
-# joint_goal[3] = -1.53769913621
-# joint_goal[4] = 1.80451970107
-# joint_goal[5] = 2.0000173681
-# joint_goal[6] = 1.63692856729
-# joint_goal[7] = 2.86215073034
+joint_goal[0] = 0.0857168138027
+joint_goal[1] = -1.58481834789
+joint_goal[2] = 0.433445118112
+joint_goal[3] = -1.53769913621
+joint_goal[4] = 1.80451970107
+joint_goal[5] = 2.0000173681
+joint_goal[6] = 1.63692856729
+joint_goal[7] = 2.86215073034
 
 # Joint pose for arm in the font
-joint_goal[0] = 0.381449401379
-joint_goal[1] = -0.000215991931152
-joint_goal[2] = 0.244765899819
-joint_goal[3] = 0.000499797728465
-joint_goal[4] = 0.158174562521
-joint_goal[5] = -3.14188650916
-joint_goal[6] = -1.13804244101
-joint_goal[7] = 3.1386509554
+# joint_goal[0] = 0.381449401379
+# joint_goal[1] = -0.000215991931152
+# joint_goal[2] = 0.244765899819
+# joint_goal[3] = 0.000499797728465
+# joint_goal[4] = 0.158174562521
+# joint_goal[5] = -3.14188650916
+# joint_goal[6] = -1.13804244101
+# joint_goal[7] = 3.1386509554
 
 move_group.set_joint_value_target(joint_goal)
 
