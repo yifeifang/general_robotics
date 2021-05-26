@@ -35,6 +35,7 @@ typedef pcl::PointCloud<pcl::PointXYZ> PointCloud;
 ros::Publisher pub_object;
 ros::Publisher pub_plane;
 ros::Publisher box_marker;
+ros::Publisher box_pose_pub;
 double head_tilt = 0;
 
 void update_head_angle(const sensor_msgs::JointStateConstPtr & msg)
@@ -59,6 +60,8 @@ void callback(const PointCloud::ConstPtr& cloud)
   //pass.setFilterLimitsNegative (true);
   pass.filter (*cloud_filtered);
   
+  // Plane extacting ////////////////////////////////////////////////////
+
   // Optional
   // seg.setOptimizeCoefficients (true);
   // Mandatory
@@ -69,7 +72,7 @@ void callback(const PointCloud::ConstPtr& cloud)
   double z = 1.0 * sin(head_tilt);
   Eigen::Vector3f axis = Eigen::Vector3f(0.0,y,z);
   seg.setAxis(axis);
-  seg.setEpsAngle(15.0 * (M_PI / 180.0));
+  seg.setEpsAngle(5.0 * (M_PI / 180.0));
   
   seg.setInputCloud (cloud_filtered);
   seg.segment (*inliers, *coefficients);
@@ -91,7 +94,7 @@ void callback(const PointCloud::ConstPtr& cloud)
 
   std::cout << "PointCloud representing the Cluster: " << plane_cloud->size () << " data points." << std::endl;
 
-  // Segment object
+  // Segment object ////////////////////////////////////////////////////
   pcl::PointIndices::Ptr object_indices (new pcl::PointIndices);
   double z_min = 0.05, z_max = 0.5; // we want the points above the plane, no farther than 5 cm from the surface
   pcl::PointCloud<pcl::PointXYZ>::Ptr hull_points (new pcl::PointCloud<pcl::PointXYZ> ());
@@ -125,20 +128,51 @@ void callback(const PointCloud::ConstPtr& cloud)
   {
     return;
   }
-  sensor_msgs::PointCloud2 object_output;
-  pcl::toROSMsg(*object_cloud, object_output);
-  object_output.header.frame_id = "head_camera_rgb_optical_frame"; 
-
+  
   sensor_msgs::PointCloud2 plane_output;
   pcl::toROSMsg(*plane_cloud, plane_output);
   plane_output.header.frame_id = "head_camera_rgb_optical_frame"; 
-
-  pub_object.publish(object_output);
   pub_plane.publish(plane_output);
+
+  // Clustering
+  std::vector<pcl::PointIndices> cluster_indices;
+  pcl::EuclideanClusterExtraction<pcl::PointXYZ> euclid;
+  euclid.setInputCloud(object_cloud);
+  euclid.setClusterTolerance(0.02);
+  euclid.setMinClusterSize(100);
+  euclid.setMaxClusterSize(25000);
+  euclid.extract(cluster_indices);
+
+  pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_cluster_max (new pcl::PointCloud<pcl::PointXYZ>);
+  int max_size = 0;
+  for (std::vector<pcl::PointIndices>::const_iterator it = cluster_indices.begin (); it != cluster_indices.end (); ++it)
+  {
+    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_cluster (new pcl::PointCloud<pcl::PointXYZ>);
+    for (const auto& idx : it->indices)
+      cloud_cluster->push_back ((*object_cloud)[idx]); //*
+    cloud_cluster->width = cloud_cluster->size ();
+    cloud_cluster->height = 1;
+    cloud_cluster->is_dense = true;
+    if(cloud_cluster->size() > max_size)
+    {
+      pcl::copyPointCloud(*cloud_cluster, *cloud_cluster_max);
+      max_size = cloud_cluster->size();
+      // std::cout << "cluster size = " << cloud_cluster->size() << std::endl;
+    }
+  }
+  if(cloud_cluster_max->size() == 0)
+  {
+    return;
+  }
+  
+  sensor_msgs::PointCloud2 object_output;
+  pcl::toROSMsg(*cloud_cluster_max, object_output);
+  object_output.header.frame_id = "head_camera_rgb_optical_frame"; 
+  pub_object.publish(object_output);
 
   // Bounding box
   pcl::PointCloud<pcl::PointXYZRGB> object_cloud_xyzrgb;
-  pcl::copyPointCloud(*object_cloud, object_cloud_xyzrgb);
+  pcl::copyPointCloud(*cloud_cluster_max, object_cloud_xyzrgb);
   pcl::PointCloud<pcl::PointXYZRGB>::Ptr extract_out(new pcl::PointCloud<pcl::PointXYZRGB>);
   shape_msgs::SolidPrimitive shape;
   geometry_msgs::Pose box_pose;
@@ -164,6 +198,7 @@ void callback(const PointCloud::ConstPtr& cloud)
     object_marker.scale.y = shape.dimensions[1];
     object_marker.scale.z = shape.dimensions[2];
     box_marker.publish(object_marker);
+    box_pose_pub.publish(box_pose);
   }
 }
 
@@ -174,6 +209,7 @@ int main(int argc, char** argv)
   pub_object = nh.advertise<PointCloud> ("points2_object", 1);
   pub_plane = nh.advertise<PointCloud> ("points2_plane", 1);
   box_marker = nh.advertise<visualization_msgs::Marker> ("box_marker", 1);
+  box_pose_pub = nh.advertise<geometry_msgs::Pose> ("box_target_pose", 1);
   ros::Subscriber sub = nh.subscribe<PointCloud>("/head_camera/depth_registered/points", 1, callback);
   ros::Subscriber joint_sub = nh.subscribe<sensor_msgs::JointState>("joint_states", 1, update_head_angle);
   ros::spin();
