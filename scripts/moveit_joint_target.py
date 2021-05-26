@@ -4,6 +4,7 @@ import rospy
 import moveit_commander
 import moveit_msgs.msg
 import geometry_msgs.msg
+import numpy as np
 from math import pi
 from std_msgs.msg import String
 from moveit_commander.conversions import pose_to_list
@@ -42,7 +43,6 @@ print robot.get_current_state()
 print ""
 
 target_q = tf.transformations.quaternion_from_euler(0.0, 3.14 / 2.0, 0.0)
-
 joint_goal = move_group.get_current_joint_values()
 
 # #Joint pose for arm on the side 
