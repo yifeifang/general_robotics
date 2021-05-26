@@ -6,7 +6,11 @@ find_package(catkin REQUIRED
   roscpp 
   rospy 
   std_msgs 
+  geometry_msgs
+  shape_msgs
+  visualization_msgs
   genmsg 
+  simple_grasping
   pcl_conversions 
   pcl_ros
   interactive_markers
@@ -26,6 +30,9 @@ catkin_package()
 
 find_package(Eigen3 REQUIRED)
 find_package(Boost REQUIRED system filesystem date_time thread)
+
+# set(ApproxMVBB_DIR "/home/dewey/ApproxMVBB/Build/lib/cmake")
+# find_package(ApproxMVBB REQUIRED )
 
 include_directories(include ${catkin_INCLUDE_DIRS})
 
