@@ -56,7 +56,7 @@ void callback(const PointCloud::ConstPtr& cloud)
   pcl::PassThrough<pcl::PointXYZ> pass;
   pass.setInputCloud(cloud);
   pass.setFilterFieldName ("z");
-  pass.setFilterLimits (0.0, 2.5);
+  pass.setFilterLimits (0.0, 1.5);
   //pass.setFilterLimitsNegative (true);
   pass.filter (*cloud_filtered);
   
@@ -88,6 +88,7 @@ void callback(const PointCloud::ConstPtr& cloud)
   pcl::PointCloud<pcl::PointXYZ>::Ptr plane_cloud (new pcl::PointCloud<pcl::PointXYZ>);
   for (std::vector<int>::const_iterator pit = inliers->indices.begin (); pit != inliers->indices.end (); ++pit)
     plane_cloud->push_back ((*cloud_filtered)[*pit]); //*
+  
   plane_cloud->width = plane_cloud->size ();
   plane_cloud->height = 1;
   plane_cloud->is_dense = true;
@@ -176,6 +177,22 @@ void callback(const PointCloud::ConstPtr& cloud)
   pcl::PointCloud<pcl::PointXYZRGB>::Ptr extract_out(new pcl::PointCloud<pcl::PointXYZRGB>);
   shape_msgs::SolidPrimitive shape;
   geometry_msgs::Pose box_pose;
+  // for(auto myc : coefficients->values)
+  // {
+  //   std::cout << myc << ", ";
+  // }
+  // std::cout << std::endl;
+
+  // very bad code
+  // fixing the normal vector of the plane segmentation
+  if(coefficients->values[3] < 0)
+  {
+    coefficients->values[0] = -coefficients->values[0];
+    coefficients->values[1] = -coefficients->values[1];
+    coefficients->values[2] = -coefficients->values[2];
+    coefficients->values[3] = -coefficients->values[3];
+  }
+
   simple_grasping::extractShape(object_cloud_xyzrgb, coefficients, *extract_out, shape,
                                 box_pose);
 
@@ -210,7 +227,7 @@ int main(int argc, char** argv)
   pub_plane = nh.advertise<PointCloud> ("points2_plane", 1);
   box_marker = nh.advertise<visualization_msgs::Marker> ("box_marker", 1);
   box_pose_pub = nh.advertise<geometry_msgs::Pose> ("box_target_pose", 1);
-  ros::Subscriber sub = nh.subscribe<PointCloud>("/head_camera/depth_registered/points", 1, callback);
+  ros::Subscriber sub = nh.subscribe<PointCloud>("/head_camera/depth_downsample/points", 1, callback);
   ros::Subscriber joint_sub = nh.subscribe<sensor_msgs::JointState>("joint_states", 1, update_head_angle);
   ros::spin();
 }
