@@ -23,12 +23,13 @@ move_group = moveit_commander.MoveGroupCommander(group_name)
 
 tf_buffer = tf2_ros.Buffer(rospy.Duration(1200.0)) #tf buffer length
 tf_listener = tf2_ros.TransformListener(tf_buffer)
+
 transform = tf_buffer.lookup_transform("base_link",
                                        "head_camera_rgb_optical_frame", #source frame
-                                       rospy.Time(0), #get the tf at first available time
-                                       rospy.Duration(1.0))
+                                       rospy.Time(0),
+                                       rospy.Duration(5.0)) #get the tf at first available time
 
-obj_pose = rospy.wait_for_message('box_target_pose', geometry_msgs.msg.Pose, timeout=5)
+obj_pose = rospy.wait_for_message('box_target_pose', geometry_msgs.msg.Pose, timeout=15)
 pose_goal = geometry_msgs.msg.PoseStamped()
 pose_goal.header.frame_id = "head_camera_rgb_optical_frame"
 pose_goal.pose = obj_pose
@@ -36,7 +37,7 @@ pose_transformed = tf2_geometry_msgs.do_transform_pose(pose_goal, transform)
 
 # listener = TransformListener()
 # target_pose = listener.transformPose("base_link", pose_transformed)
-pose_transformed.pose.position.z += 0.5
+pose_transformed.pose.position.z += 0.4
 print pose_transformed.pose.position.x
 print pose_transformed.pose.position.y
 print pose_transformed.pose.position.z
@@ -88,32 +89,32 @@ myplan = move_group.plan()
 # myc = move_group.get_path_constraints()
 
 move_group.execute(myplan)
-# # Calling `stop()` ensures that there is no residual movement
-# move_group.stop()
-# # It is always good to clear your targets after planning with poses.
-# # Note: there is no equivalent function for clear_joint_value_targets()
-# move_group.clear_pose_targets()
-
-time.sleep(3)
-
-waypoints = []
-wpose = move_group.get_current_pose().pose
-wpose.position.z -= 0.1
-waypoints.append(copy.deepcopy(wpose))
-
-wpose = move_group.get_current_pose().pose
-wpose.position.z -= 0.2
-waypoints.append(copy.deepcopy(wpose))
-
-(plan, fraction) = move_group.compute_cartesian_path(
-                                   waypoints,   # waypoints to follow
-                                   0.01,        # eef_step
-                                   0.0,
-                                   False)         # jump_threshold
-
-move_group.execute(plan)
 # Calling `stop()` ensures that there is no residual movement
 move_group.stop()
 # It is always good to clear your targets after planning with poses.
 # Note: there is no equivalent function for clear_joint_value_targets()
 move_group.clear_pose_targets()
+
+# time.sleep(3)
+
+# waypoints = []
+# wpose = move_group.get_current_pose().pose
+# wpose.position.z -= 0.1
+# waypoints.append(copy.deepcopy(wpose))
+
+# wpose = move_group.get_current_pose().pose
+# wpose.position.z -= 0.2
+# waypoints.append(copy.deepcopy(wpose))
+
+# (plan, fraction) = move_group.compute_cartesian_path(
+#                                    waypoints,   # waypoints to follow
+#                                    0.01,        # eef_step
+#                                    0.0,
+#                                    False)         # jump_threshold
+
+# move_group.execute(plan)
+# # Calling `stop()` ensures that there is no residual movement
+# move_group.stop()
+# # It is always good to clear your targets after planning with poses.
+# # Note: there is no equivalent function for clear_joint_value_targets()
+# move_group.clear_pose_targets()
