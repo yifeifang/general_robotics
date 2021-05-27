@@ -86,7 +86,7 @@ orientation_constraint.link_name = "wrist_roll_link"
 orientation_constraint.orientation = geometry_msgs.msg.Quaternion(target_q[0],target_q[1],target_q[2],target_q[3])
 # It looks like it didn't took value < 0.1 into account need to investigate
 # in to ompl source for more info
-orientation_constraint.absolute_x_axis_tolerance = 0.1
+orientation_constraint.absolute_x_axis_tolerance = 2 * pi
 orientation_constraint.absolute_y_axis_tolerance = 0.1
 orientation_constraint.absolute_z_axis_tolerance = 0.1
 orientation_constraint.weight = 1
