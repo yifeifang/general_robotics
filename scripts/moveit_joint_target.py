@@ -10,6 +10,21 @@ from std_msgs.msg import String
 from moveit_commander.conversions import pose_to_list
 import tf
 
+def wait_for_state_update(box_name, scene, box_is_known=False, box_is_attached=False, timeout=4):
+    box_name = box_name
+    scene = scene
+    start = rospy.get_time()
+    seconds = rospy.get_time()
+    while (seconds - start < timeout) and not rospy.is_shutdown():
+      attached_objects = scene.get_attached_objects([box_name])
+      is_attached = len(attached_objects.keys()) > 0
+      is_known = box_name in scene.get_known_object_names()
+      if (box_is_attached == is_attached) and (box_is_known == is_known):
+        return True
+      rospy.sleep(0.1)
+      seconds = rospy.get_time()
+    return False
+
 moveit_commander.roscpp_initialize(sys.argv)
 rospy.init_node('move_group_python_interface_tutorial', anonymous=True)
 robot = moveit_commander.RobotCommander()
@@ -17,30 +32,21 @@ scene = moveit_commander.PlanningSceneInterface()
 group_name = "arm_with_torso"
 move_group = moveit_commander.MoveGroupCommander(group_name)
 
-# We can get the name of the reference frame for this robot:
-planning_frame = move_group.get_planning_frame()
-print "============ Planning frame: %s" % planning_frame
+box_pose = geometry_msgs.msg.PoseStamped()
+box_pose.header.frame_id = "wrist_roll_link"
+box_pose.pose.orientation.w = 1.0
+box_pose.pose.position.x += 0.325
+box_name = "box"
+rospy.sleep(2)
+scene.add_box(box_name, box_pose, size=(0.35, 0.2, 0.35))
+print wait_for_state_update(box_name, scene, box_is_known=True)
 
-# We can also print the name of the end-effector link for this group:
-eef_link = move_group.get_end_effector_link()
-print "============ End effector link: %s" % eef_link
+grasping_group = 'gripper'
+touch_links = robot.get_link_names(group=grasping_group)
+touch_links.append("wrist_roll_link")
+scene.attach_box(move_group.get_end_effector_link(), box_name, touch_links=touch_links)
+print wait_for_state_update(box_name, scene, box_is_attached=True)
 
-# # Set end effector
-# move_group.set_end_effector_link('wrist_flex_link')
-
-# We can also print the name of the end-effector link for this group:
-eef_link = move_group.get_end_effector_link()
-print "============ End effector link: %s" % eef_link
-
-# We can get a list of all the groups in the robot:
-group_names = robot.get_group_names()
-print "============ Available Planning Groups:", robot.get_group_names()
-
-# Sometimes for debugging it is useful to print the entire state of the
-# robot:
-print "============ Printing robot state"
-print robot.get_current_state()
-print ""
 
 target_q = tf.transformations.quaternion_from_euler(0.0, 3.14 / 2.0, 0.0)
 joint_goal = move_group.get_current_joint_values()
@@ -101,3 +107,8 @@ myplan = move_group.plan()
 move_group.execute(myplan)
 # Calling `stop()` ensures that there is no residual movement
 move_group.stop()
+
+scene.remove_attached_object(move_group.get_end_effector_link(), name=box_name)
+print wait_for_state_update(box_name, scene, box_is_attached=False)
+scene.remove_world_object(box_name)
+print wait_for_state_update(box_name, scene)
