@@ -47,6 +47,8 @@ angles = euler_from_quaternion([pose_transformed.pose.orientation.x, pose_transf
 target_q = tf.transformations.quaternion_from_euler(0.0, 3.14 / 2.0, angles[2])
 
 obj_marker = rospy.wait_for_message('box_marker', Marker, timeout=15)
+
+# if the box maker has scale in y larger than scale in x then we need to turn the gripper 90 degrees
 if obj_marker.scale.y > obj_marker.scale.x:
     target_q = tf.transformations.quaternion_multiply(target_q, tf.transformations.quaternion_from_euler(3.14 / 2.0, 0.0, 0.0))
 
