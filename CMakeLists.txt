@@ -59,5 +59,9 @@ add_executable(segment_object src/segment_object.cpp)
 target_link_libraries(segment_object ${catkin_LIBRARIES})
 add_dependencies(segment_object ${catkin_EXPORTED_TARGETS})
 
+add_executable(moveit_test src/moveit_test.cpp)
+target_link_libraries(moveit_test ${catkin_LIBRARIES})
+add_dependencies(moveit_test ${catkin_EXPORTED_TARGETS})
+
 add_executable(motionplan src/motionplan.cpp)
 target_link_libraries(motionplan ${catkin_LIBRARIES} ${Boost_LIBRARIES})

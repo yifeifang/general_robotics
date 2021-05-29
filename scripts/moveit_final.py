@@ -15,6 +15,7 @@ import tf2_ros
 import tf2_geometry_msgs
 import numpy as np
 import time
+from fetch_api import Gripper
 
 moveit_commander.roscpp_initialize(sys.argv)
 rospy.init_node('move_group_python_interface_tutorial', anonymous=True)
@@ -22,6 +23,7 @@ robot = moveit_commander.RobotCommander()
 scene = moveit_commander.PlanningSceneInterface()
 group_name = "arm_with_torso"
 move_group = moveit_commander.MoveGroupCommander(group_name)
+gripper = Gripper()
 
 tf_buffer = tf2_ros.Buffer(rospy.Duration(1200.0)) #tf buffer length
 tf_listener = tf2_ros.TransformListener(tf_buffer)
@@ -47,11 +49,18 @@ print pose_transformed.pose.position.z
 angles = euler_from_quaternion([pose_transformed.pose.orientation.x, pose_transformed.pose.orientation.y, pose_transformed.pose.orientation.z, pose_transformed.pose.orientation.w])
 target_q = tf.transformations.quaternion_from_euler(0.0, 3.14 / 2.0, angles[2])
 
-obj_marker = rospy.wait_for_message('box_marker', Marker, timeout=15)
-
-# if the box maker has scale in y larger than scale in x then we need to turn the gripper 90 degrees
-if obj_marker.scale.y > obj_marker.scale.x:
-    target_q = tf.transformations.quaternion_multiply(target_q, tf.transformations.quaternion_from_euler(3.14 / 2.0, 0.0, 0.0))
+while True:
+    obj_marker1 = rospy.wait_for_message('box_marker', Marker, timeout=15)
+    obj_marker2 = rospy.wait_for_message('box_marker', Marker, timeout=15)
+    # if the box maker has scale in y larger than scale in x then we need to turn the gripper 90 degrees
+    if obj_marker1.scale.y > obj_marker1.scale.x and obj_marker2.scale.y > obj_marker2.scale.x:
+        target_q = tf.transformations.quaternion_multiply(target_q, tf.transformations.quaternion_from_euler(3.14 / 2.0, 0.0, 0.0))
+        break
+    elif obj_marker1.scale.y < obj_marker1.scale.x and obj_marker2.scale.y < obj_marker2.scale.x:
+        break
+    else:
+        print "inconsistant marker"
+        pass
 
 pose_transformed.pose.orientation.x = target_q[0]
 pose_transformed.pose.orientation.y = target_q[1]
@@ -110,6 +119,7 @@ move_group.clear_pose_targets()
 
 #################################### retracting
 rospy.sleep(3)
+gripper.close()
 transform = tf_buffer.lookup_transform("base_link",
                                        "wrist_roll_link", #source frame
                                        rospy.Time(0),
