@@ -8,6 +8,7 @@ from math import pi
 from std_msgs.msg import String
 from visualization_msgs.msg import Marker
 from geometry_msgs.msg import Pose
+from robotics_labs.msg import BoxTarget
 from moveit_commander.conversions import pose_to_list
 import tf
 from tf.transformations import *
@@ -33,10 +34,10 @@ transform = tf_buffer.lookup_transform("base_link",
                                        rospy.Time(0),
                                        rospy.Duration(5.0)) #get the tf at first available time
 
-obj_pose = rospy.wait_for_message('box_target_pose', geometry_msgs.msg.Pose, timeout=15)
+box_target = rospy.wait_for_message('box_target', BoxTarget, timeout=15)
 pose_goal = geometry_msgs.msg.PoseStamped()
 pose_goal.header.frame_id = "head_camera_rgb_optical_frame"
-pose_goal.pose = obj_pose
+pose_goal.pose = box_target.box_pose
 pose_transformed = tf2_geometry_msgs.do_transform_pose(pose_goal, transform)
 
 # listener = TransformListener()
@@ -49,18 +50,21 @@ print pose_transformed.pose.position.z
 angles = euler_from_quaternion([pose_transformed.pose.orientation.x, pose_transformed.pose.orientation.y, pose_transformed.pose.orientation.z, pose_transformed.pose.orientation.w])
 target_q = tf.transformations.quaternion_from_euler(0.0, 3.14 / 2.0, angles[2])
 
-while True:
-    obj_marker1 = rospy.wait_for_message('box_marker', Marker, timeout=15)
-    obj_marker2 = rospy.wait_for_message('box_marker', Marker, timeout=15)
-    # if the box maker has scale in y larger than scale in x then we need to turn the gripper 90 degrees
-    if obj_marker1.scale.y > obj_marker1.scale.x and obj_marker2.scale.y > obj_marker2.scale.x:
-        target_q = tf.transformations.quaternion_multiply(target_q, tf.transformations.quaternion_from_euler(3.14 / 2.0, 0.0, 0.0))
-        break
-    elif obj_marker1.scale.y < obj_marker1.scale.x and obj_marker2.scale.y < obj_marker2.scale.x:
-        break
-    else:
-        print "inconsistant marker"
-        pass
+# if the box maker has scale in y larger than scale in x then we need to turn the gripper 90 degrees
+if box_target.box_scale.scale.y > box_target.box_scale.scale.x:
+    target_q = tf.transformations.quaternion_multiply(target_q, tf.transformations.quaternion_from_euler(3.14 / 2.0, 0.0, 0.0))
+# while True:
+#     obj_marker1 = rospy.wait_for_message('box_marker', Marker, timeout=15)
+#     obj_marker2 = rospy.wait_for_message('box_marker', Marker, timeout=15)
+#     # if the box maker has scale in y larger than scale in x then we need to turn the gripper 90 degrees
+#     if obj_marker1.scale.y > obj_marker1.scale.x and obj_marker2.scale.y > obj_marker2.scale.x:
+#         target_q = tf.transformations.quaternion_multiply(target_q, tf.transformations.quaternion_from_euler(3.14 / 2.0, 0.0, 0.0))
+#         break
+#     elif obj_marker1.scale.y < obj_marker1.scale.x and obj_marker2.scale.y < obj_marker2.scale.x:
+#         break
+#     else:
+#         print "inconsistant marker"
+#         pass
 
 pose_transformed.pose.orientation.x = target_q[0]
 pose_transformed.pose.orientation.y = target_q[1]

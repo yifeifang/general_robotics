@@ -25,8 +25,8 @@ find_package(catkin REQUIRED
   rosbag
   tf2_ros
   tf2_eigen
-  tf2_geometry_msgs)
-catkin_package()
+  tf2_geometry_msgs
+  message_generation)
 
 find_package(Eigen3 REQUIRED)
 find_package(Boost REQUIRED system filesystem date_time thread)
@@ -36,16 +36,22 @@ find_package(Boost REQUIRED system filesystem date_time thread)
 
 include_directories(include ${catkin_INCLUDE_DIRS})
 
-install(
-  PROGRAMS
-    scripts/demo.py
-  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+add_message_files(
+  DIRECTORY
+  msg
+  FILES
+  BoxTarget.msg
 )
 
-install(
-  DIRECTORY launch maps config msg srv
-  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+generate_messages(
+  DEPENDENCIES
+  std_msgs
+  geometry_msgs
+  visualization_msgs
 )
+
+# catkin_package()
+catkin_package(CATKIN_DEPENDS message_runtime)
 
 add_executable(segmentation src/segmentation.cpp)
 target_link_libraries(segmentation ${catkin_LIBRARIES})
@@ -65,3 +71,14 @@ add_dependencies(moveit_test ${catkin_EXPORTED_TARGETS})
 
 add_executable(motionplan src/motionplan.cpp)
 target_link_libraries(motionplan ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+
+install(
+  PROGRAMS
+    scripts/demo.py
+  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+
+install(
+  DIRECTORY launch maps config msg srv
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+)
