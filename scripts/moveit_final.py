@@ -47,7 +47,7 @@ move_group = moveit_commander.MoveGroupCommander(group_name)
 gripper = Gripper()
 torso = Torso()
 
-torso.set_height(0.1857168138027)
+torso.set_height(0.1357168138027)
 
 base_plane_pose = geometry_msgs.msg.PoseStamped()
 base_plane_pose.header.frame_id = "base_link"
