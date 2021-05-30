@@ -19,6 +19,7 @@ import numpy as np
 import time
 from fetch_api import Gripper
 from fetch_api import Torso
+from fetch_api import Head
 from std_srvs.srv import Empty
 
 def wait_for_state_update(box_name, scene, box_is_known=False, box_is_attached=False, timeout=4):
@@ -47,6 +48,7 @@ group_name = "arm_with_torso"
 move_group = moveit_commander.MoveGroupCommander(group_name)
 gripper = Gripper()
 torso = Torso()
+head = Head()
 
 torso.set_height(0.1357168138027)
 
@@ -120,6 +122,14 @@ pose_transformed.pose.orientation.w = target_q[3]
 move_group.set_pose_target(pose_transformed)
 
 move_group.set_planning_time(15)
+
+head.pan_tilt(-1.5, 0.8)
+head.pan_tilt(1.5, 0.8)
+head.pan_tilt(-1.5, 0.4)
+head.pan_tilt(1.5, 0.4)
+head.pan_tilt(-1.5, 0.0)
+head.pan_tilt(1.5, 0.0)
+head.pan_tilt(0.0, 0.0)
 
 myplan = move_group.plan()
 # myc = move_group.get_path_constraints()
@@ -269,7 +279,7 @@ myplan = move_group.plan()
 
 if not myplan.joint_trajectory.points:  # True if trajectory contains points
   exit()
-  
+
 move_group.execute(myplan)
 # Calling `stop()` ensures that there is no residual movement
 move_group.stop()
