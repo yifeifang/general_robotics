@@ -17,6 +17,26 @@ import tf2_geometry_msgs
 import numpy as np
 import time
 from fetch_api import Gripper
+from fetch_api import Torso
+from std_srvs.srv import Empty
+
+def wait_for_state_update(box_name, scene, box_is_known=False, box_is_attached=False, timeout=4):
+    box_name = box_name
+    scene = scene
+    start = rospy.get_time()
+    seconds = rospy.get_time()
+    while (seconds - start < timeout) and not rospy.is_shutdown():
+      attached_objects = scene.get_attached_objects([box_name])
+      is_attached = len(attached_objects.keys()) > 0
+      is_known = box_name in scene.get_known_object_names()
+      if (box_is_attached == is_attached) and (box_is_known == is_known):
+        return True
+      rospy.sleep(0.1)
+      seconds = rospy.get_time()
+    return False
+
+rospy.wait_for_service('/clear_octomap') #this will stop your code until the clear octomap service starts running
+clear_octomap = rospy.ServiceProxy('/clear_octomap', Empty)
 
 moveit_commander.roscpp_initialize(sys.argv)
 rospy.init_node('move_group_python_interface_tutorial', anonymous=True)
@@ -25,8 +45,20 @@ scene = moveit_commander.PlanningSceneInterface()
 group_name = "arm_with_torso"
 move_group = moveit_commander.MoveGroupCommander(group_name)
 gripper = Gripper()
+torso = Torso()
 
-tf_buffer = tf2_ros.Buffer(rospy.Duration(1200.0)) #tf buffer length
+torso.set_height(0.1857168138027)
+
+base_plane_pose = geometry_msgs.msg.PoseStamped()
+base_plane_pose.header.frame_id = "base_link"
+base_plane_pose.pose.position.z += 0.41
+base_plane_pose.pose.position.x += 0.17
+base_plane_name = "base_plane"
+rospy.sleep(2)
+scene.add_box(base_plane_name, base_plane_pose, size=(0.253, 0.57, 0.03))
+print wait_for_state_update(base_plane_name, scene, box_is_known=True)
+
+tf_buffer = tf2_ros.Buffer(rospy.Duration(300.0)) #tf buffer length
 tf_listener = tf2_ros.TransformListener(tf_buffer)
 
 transform = tf_buffer.lookup_transform("base_link",
@@ -111,8 +143,8 @@ waypoints.append(copy.deepcopy(pose))
 (plan, fraction) = move_group.compute_cartesian_path(
                                    waypoints,   # waypoints to follow
                                    0.01,        # eef_step
-                                   0.0,
-                                   False)         # jump_threshold
+                                   5.0,         # jump_threshold
+                                   False)         
 
 move_group.execute(plan)
 # Calling `stop()` ensures that there is no residual movement
@@ -148,7 +180,7 @@ waypoints.append(copy.deepcopy(pose))
 (plan, fraction) = move_group.compute_cartesian_path(
                                    waypoints,   # waypoints to follow
                                    0.01,        # eef_step
-                                   0.0,
+                                   5.0,
                                    False)         # jump_threshold
 
 move_group.execute(plan)
@@ -160,9 +192,35 @@ move_group.clear_pose_targets()
 
 ########################################### tuck
 rospy.sleep(3)
+
+box_pose = geometry_msgs.msg.PoseStamped()
+box_pose.header.frame_id = "wrist_roll_link"
+box_pose.pose.orientation.w = 1.0
+box_pose.pose.position.x += 0.325
+box_name = "box"
+rospy.sleep(2)
+scene.add_box(box_name, box_pose, size=(0.35, 0.2, 0.35))
+print wait_for_state_update(box_name, scene, box_is_known=True)
+
+
+ground_plane_pose = geometry_msgs.msg.PoseStamped()
+ground_plane_pose.header.frame_id = "base_link"
+ground_plane_name = "ground_plane"
+rospy.sleep(2)
+scene.add_box(ground_plane_name, ground_plane_pose, size=(5, 5, 0.1))
+print wait_for_state_update(ground_plane_name, scene, box_is_known=True)
+
+grasping_group = 'gripper'
+touch_links = robot.get_link_names(group=grasping_group)
+touch_links.append("wrist_roll_link")
+scene.attach_box(move_group.get_end_effector_link(), box_name, touch_links=touch_links)
+print wait_for_state_update(box_name, scene, box_is_attached=True)
+
+clear_octomap()
+
 target_q = tf.transformations.quaternion_from_euler(0.0, 3.14 / 2.0, 0.0)
 joint_goal = [0 for i in range(8)]
-joint_goal[0] = 0.0857168138027
+joint_goal[0] = 0.35#0.0857168138027
 joint_goal[1] = -1.58481834789
 joint_goal[2] = 0.433445118112
 joint_goal[3] = -1.53769913621
@@ -196,3 +254,15 @@ myplan = move_group.plan()
 move_group.execute(myplan)
 # Calling `stop()` ensures that there is no residual movement
 move_group.stop()
+
+scene.remove_attached_object(move_group.get_end_effector_link(), name=box_name)
+print wait_for_state_update(box_name, scene, box_is_attached=False)
+scene.remove_world_object(box_name)
+print wait_for_state_update(box_name, scene)
+scene.remove_world_object(ground_plane_name)
+print wait_for_state_update(ground_plane_name, scene)
+scene.remove_world_object(base_plane_name)
+print wait_for_state_update(base_plane_name, scene)
+rospy.sleep(3)
+
+torso.set_height(0.0857168138027)

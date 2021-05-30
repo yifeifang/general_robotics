@@ -9,6 +9,7 @@ from math import pi
 from std_msgs.msg import String
 from moveit_commander.conversions import pose_to_list
 import tf
+from std_srvs.srv import Empty
 
 def wait_for_state_update(box_name, scene, box_is_known=False, box_is_attached=False, timeout=4):
     box_name = box_name
@@ -32,21 +33,25 @@ scene = moveit_commander.PlanningSceneInterface()
 group_name = "arm_with_torso"
 move_group = moveit_commander.MoveGroupCommander(group_name)
 
-# box_pose = geometry_msgs.msg.PoseStamped()
-# box_pose.header.frame_id = "wrist_roll_link"
-# box_pose.pose.orientation.w = 1.0
-# box_pose.pose.position.x += 0.325
-# box_name = "box"
-# rospy.sleep(2)
-# scene.add_box(box_name, box_pose, size=(0.35, 0.2, 0.35))
-# print wait_for_state_update(box_name, scene, box_is_known=True)
+rospy.wait_for_service('/clear_octomap') #this will stop your code until the clear octomap service starts running
+clear_octomap = rospy.ServiceProxy('/clear_octomap', Empty)
 
-# grasping_group = 'gripper'
-# touch_links = robot.get_link_names(group=grasping_group)
-# touch_links.append("wrist_roll_link")
-# scene.attach_box(move_group.get_end_effector_link(), box_name, touch_links=touch_links)
-# print wait_for_state_update(box_name, scene, box_is_attached=True)
+box_pose = geometry_msgs.msg.PoseStamped()
+box_pose.header.frame_id = "wrist_roll_link"
+box_pose.pose.orientation.w = 1.0
+box_pose.pose.position.x += 0.325
+box_name = "box"
+rospy.sleep(2)
+scene.add_box(box_name, box_pose, size=(0.35, 0.2, 0.35))
+print wait_for_state_update(box_name, scene, box_is_known=True)
 
+grasping_group = 'gripper'
+touch_links = robot.get_link_names(group=grasping_group)
+touch_links.append("wrist_roll_link")
+scene.attach_box(move_group.get_end_effector_link(), box_name, touch_links=touch_links)
+print wait_for_state_update(box_name, scene, box_is_attached=True)
+
+clear_octomap()
 
 target_q = tf.transformations.quaternion_from_euler(0.0, 3.14 / 2.0, 0.0)
 
@@ -111,7 +116,7 @@ move_group.execute(myplan)
 # Calling `stop()` ensures that there is no residual movement
 move_group.stop()
 
-# scene.remove_attached_object(move_group.get_end_effector_link(), name=box_name)
-# print wait_for_state_update(box_name, scene, box_is_attached=False)
-# scene.remove_world_object(box_name)
-# print wait_for_state_update(box_name, scene)
+scene.remove_attached_object(move_group.get_end_effector_link(), name=box_name)
+print wait_for_state_update(box_name, scene, box_is_attached=False)
+scene.remove_world_object(box_name)
+print wait_for_state_update(box_name, scene)

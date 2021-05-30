@@ -56,7 +56,7 @@ bridge = CvBridge()
 initBB = None
 tracker = cv2.TrackerCSRT_create()
 fetch_base = fetch_api.Base()
-linear_speed = 0.1
+linear_speed = 0.3
 angular_speed = 0
 porpotion_prev = 0  # assuming fetch is facing the object
 porpotion_tilt_prev = 0
@@ -146,7 +146,7 @@ def image_callback(msg):
             intergral_tilt += (precentage_height - 0.5)
 
             angular_speed = porpotion + 0.001 * differential
-            tilt = 5 * porpotion_tilt + 0.001 * differential_tilt + 0.001 * intergral_tilt
+            tilt = 5 * porpotion_tilt + 0.01 * differential_tilt + 0.001 * intergral_tilt
             # print porpotion_tilt, differential_tilt, tilt
             porpotion_prev = porpotion
             porpotion_tilt_prev = porpotion_tilt
