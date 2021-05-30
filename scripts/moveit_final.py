@@ -5,6 +5,7 @@ import moveit_commander
 import moveit_msgs.msg
 import geometry_msgs.msg
 from math import pi
+from math import sqrt
 from std_msgs.msg import String
 from visualization_msgs.msg import Marker
 from geometry_msgs.msg import Pose
@@ -66,7 +67,20 @@ transform = tf_buffer.lookup_transform("base_link",
                                        rospy.Time(0),
                                        rospy.Duration(5.0)) #get the tf at first available time
 
-box_target = rospy.wait_for_message('box_target', BoxTarget, timeout=15)
+while True:
+    box_target1 = rospy.wait_for_message('box_target', BoxTarget, timeout=15)
+    box_target2 = rospy.wait_for_message('box_target', BoxTarget, timeout=15)
+    dist_metric = sqrt((box_target1.box_pose.position.x - box_target2.box_pose.position.x)**2 + 
+                            (box_target1.box_pose.position.y - box_target2.box_pose.position.y)**2 + 
+                            (box_target1.box_pose.position.z - box_target2.box_pose.position.z)**2)
+    scale_metric = abs(box_target1.box_scale.scale.x * box_target1.box_scale.scale.y * box_target1.box_scale.scale.z -
+                        box_target2.box_scale.scale.x * box_target2.box_scale.scale.y * box_target2.box_scale.scale.z)
+
+    print "dist_metric = ", dist_metric, ";  scale_metric = ", scale_metric
+    if dist_metric < 0.02 and scale_metric < 0.02:
+        box_target = box_target2
+        break
+
 pose_goal = geometry_msgs.msg.PoseStamped()
 pose_goal.header.frame_id = "head_camera_rgb_optical_frame"
 pose_goal.pose = box_target.box_pose
@@ -106,9 +120,11 @@ pose_transformed.pose.orientation.w = target_q[3]
 move_group.set_pose_target(pose_transformed)
 
 move_group.set_planning_time(15)
-myplan = move_group.plan()
 
+myplan = move_group.plan()
 # myc = move_group.get_path_constraints()
+if not myplan.joint_trajectory.points:  # True if trajectory contains points
+  exit()
 
 move_group.execute(myplan)
 # Calling `stop()` ensures that there is no residual movement
@@ -251,6 +267,9 @@ move_group.set_path_constraints(constraint)
 move_group.set_planning_time(15)
 myplan = move_group.plan()
 
+if not myplan.joint_trajectory.points:  # True if trajectory contains points
+  exit()
+  
 move_group.execute(myplan)
 # Calling `stop()` ensures that there is no residual movement
 move_group.stop()
