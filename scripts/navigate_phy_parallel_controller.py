@@ -71,6 +71,7 @@ dist_sub = None
 tilt = Value('d', 0.0)
 tf_buffer = None
 stop = False
+flush_count = 0
 
 def controller():
     print "process running"
@@ -78,14 +79,16 @@ def controller():
     global linear_speed
     global tilt
     global traj_client
+    global stop
     fetch_base = fetch_api.Base()
+    fetch_head = fetch_api.Head()
     r = rospy.Rate(25)
-    while not rospy.is_shutdown():
+    while not rospy.is_shutdown() and not stop:
         # print "publishing"
         fetch_base.move(linear_speed, angular_speed.value)
         point = trajectory_msgs.msg.JointTrajectoryPoint()
         point.positions = [0, tilt.value]
-        point.time_from_start = rospy.Duration(2)
+        point.time_from_start = rospy.Duration(1)
         goal = control_msgs.msg.FollowJointTrajectoryGoal()
 
         goal.trajectory.joint_names = [PAN_JOINT, TILT_JOINT]
@@ -93,6 +96,11 @@ def controller():
         traj_client.send_goal(goal)
         
         r.sleep()
+
+    fetch_base.go_forward(0.35)
+    fetch_head.pan_tilt(0,0.8)
+
+    return
 
 def dist_callback(msg):
     global current_dist
@@ -113,7 +121,8 @@ def dist_callback(msg):
 
     current_dist = pose_transformed.pose.position.x
 
-    if (not math.isnan(current_dist)) and current_dist < 0.82 and current_dist != 0:
+    if (not math.isnan(current_dist)) and current_dist < 1.15 and current_dist != 0:
+        print "stop set"
         stop = True
 
     print "current_dist = ", current_dist
@@ -132,10 +141,14 @@ def image_callback(msg):
     global cy
     global image_sub
     global tilt
+    global flush_count
     # print("Received an image!")
     # if (not math.isnan(current_dist)) and current_dist < 0.85 and current_dist != 0:
     #     fetch_base.move(0, 0)
     #     image_sub.unregister()
+    if flush_count < 5:
+        flush_count += 1
+        return
     try:
         # Convert your ROS Image message to OpenCV2
         cv2_img = bridge.imgmsg_to_cv2(msg, "bgr8")
@@ -151,7 +164,7 @@ def image_callback(msg):
             initBB = cv2.selectROI("Frame", cv2_img, fromCenter=False, showCrosshair=True)
             tracker.init(cv2_img, initBB)
         else:
-            linear_speed = 0.25
+            linear_speed = 0.1
             (success, box) = tracker.update(cv2_img)
             (x, y, w, h) = [int(v) for v in box]
             cv2.rectangle(cv2_img, (x, y), (x + w, y + h), (0, 255, 0), 2)
@@ -167,11 +180,15 @@ def image_callback(msg):
 
             porpotion_tilt = (precentage_height - 0.5)
             differential_tilt = porpotion_tilt - porpotion_tilt
-            intergral_tilt += (precentage_height - 0.5)
+            # intergral_tilt += (precentage_height - 0.5)
 
             angular_speed.value = porpotion + 0.001 * differential
-            tilt.value = 5 * porpotion_tilt + 0.01 * differential_tilt + 0.001 * intergral_tilt
-            # print porpotion_tilt, differential_tilt, tilt
+            tilt.value = 1.8 * porpotion_tilt + 0.5 * differential_tilt
+
+            if tilt.value < 0.2:
+                tilt.value = 0.2
+
+            print porpotion_tilt, differential_tilt, tilt.value
             porpotion_prev = porpotion
             porpotion_tilt_prev = porpotion_tilt
             # Displaying the image 

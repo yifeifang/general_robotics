@@ -244,6 +244,10 @@ print wait_for_state_update(box_name, scene, box_is_attached=True)
 
 clear_octomap()
 
+head.pan_tilt(-1.5, 0.0)
+head.pan_tilt(1.5, 0.0)
+head.pan_tilt(0.0, 0.0)
+
 target_q = tf.transformations.quaternion_from_euler(0.0, 3.14 / 2.0, 0.0)
 joint_goal = [0 for i in range(8)]
 joint_goal[0] = 0.35#0.0857168138027
