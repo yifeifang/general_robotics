@@ -11,7 +11,7 @@
 # rospy for the subscriber
 import rospy
 # ROS Image message
-from sensor_msgs.msg import Image
+from sensor_msgs.msg import Image, JointState
 # ROS Image message -> OpenCV2 image converter
 from cv_bridge import CvBridge, CvBridgeError
 
@@ -60,7 +60,7 @@ tracker = cv2.TrackerCSRT_create()
 linear_speed = 0
 angular_speed = Value('d', 0.0)
 porpotion_prev = 0  # assuming fetch is facing the object
-porpotion_tilt_prev = 0
+e_prev = 0
 intergral_tilt = 0
 traj_client = None
 current_dist = 0
@@ -72,6 +72,7 @@ tilt = Value('d', 0.0)
 tf_buffer = None
 stop = False
 flush_count = 0
+current_head_angle = 0
 
 def controller():
     print "process running"
@@ -88,7 +89,7 @@ def controller():
         fetch_base.move(linear_speed, angular_speed.value)
         point = trajectory_msgs.msg.JointTrajectoryPoint()
         point.positions = [0, tilt.value]
-        point.time_from_start = rospy.Duration(1)
+        point.time_from_start = rospy.Duration(2.5)
         goal = control_msgs.msg.FollowJointTrajectoryGoal()
 
         goal.trajectory.joint_names = [PAN_JOINT, TILT_JOINT]
@@ -97,10 +98,17 @@ def controller():
         
         r.sleep()
 
-    fetch_base.go_forward(0.35)
+    # fetch_base.go_forward(0.35)
     fetch_head.pan_tilt(0,0.8)
 
     return
+
+def joint_callback(msg):
+    try:
+        current_head_angle = msg.position[5]
+    except:
+        pass
+    # print current_head_angle
 
 def dist_callback(msg):
     global current_dist
@@ -121,7 +129,7 @@ def dist_callback(msg):
 
     current_dist = pose_transformed.pose.position.x
 
-    if (not math.isnan(current_dist)) and current_dist < 1.15 and current_dist != 0:
+    if (not math.isnan(current_dist)) and current_dist < 1 and current_dist != 0:
         print "stop set"
         stop = True
 
@@ -142,6 +150,7 @@ def image_callback(msg):
     global image_sub
     global tilt
     global flush_count
+    global e_prev
     # print("Received an image!")
     # if (not math.isnan(current_dist)) and current_dist < 0.85 and current_dist != 0:
     #     fetch_base.move(0, 0)
@@ -164,7 +173,7 @@ def image_callback(msg):
             initBB = cv2.selectROI("Frame", cv2_img, fromCenter=False, showCrosshair=True)
             tracker.init(cv2_img, initBB)
         else:
-            linear_speed = 0.1
+            linear_speed = 0.15
             (success, box) = tracker.update(cv2_img)
             (x, y, w, h) = [int(v) for v in box]
             cv2.rectangle(cv2_img, (x, y), (x + w, y + h), (0, 255, 0), 2)
@@ -178,26 +187,28 @@ def image_callback(msg):
             porpotion = -(precentage - 0.5)
             differential = porpotion - porpotion_prev
 
-            porpotion_tilt = (precentage_height - 0.5)
-            differential_tilt = porpotion_tilt - porpotion_tilt
+            SV = -0.8 + 2 * precentage_height#(precentage_height - 0.5)
+            e = SV
+            porpotion_tilt = e
+            differential_tilt = e - e_prev
             # intergral_tilt += (precentage_height - 0.5)
 
             angular_speed.value = porpotion + 0.001 * differential
-            tilt.value = 1.8 * porpotion_tilt + 0.5 * differential_tilt
+            tilt.value = current_head_angle + 1.8 * porpotion_tilt + 0.5 * differential_tilt
 
             if tilt.value < 0.2:
                 tilt.value = 0.2
 
-            print porpotion_tilt, differential_tilt, tilt.value
+            print "SV = ", SV, ", precentage_height = ", precentage_height
             porpotion_prev = porpotion
-            porpotion_tilt_prev = porpotion_tilt
+            e_prev = e
             # Displaying the image 
             # fetch_base.move(linear_speed, angular_speed)
 
             # point = trajectory_msgs.msg.JointTrajectoryPoint()
             # point.positions = [0, tilt]
             # point.time_from_start = rospy.Duration(PAN_TILT_TIME)
-            # goal = control_msgs.msg.FollowJointTrajectoryGoal()
+            # goal = control_msgs.msg.FollowJointTrajectoryporpotion_tiltbporpotion_tiltporpotion_tiltGoal()
 
             # goal.trajectory.joint_names = [PAN_JOINT, TILT_JOINT]
             # goal.trajectory.points.append(point)
@@ -221,6 +232,7 @@ def main():
     # Set up your subscriber and define its callback
     image_sub = rospy.Subscriber(image_topic, Image, image_callback)
     dist_sub = rospy.Subscriber("box_target", BoxTarget, dist_callback)
+    joint_sub = rospy.Subscriber("joint_states", JointState, joint_callback)
     t = Thread(target=controller)
     t.start()
     # Spin until ctrl + c. You can also choose to spin once
@@ -228,6 +240,7 @@ def main():
         if stop:
             image_sub.unregister()
             dist_sub.unregister()
+            joint_sub.unregister()
         rospy.sleep(0.1)
     rospy.spin()
     t.join()
