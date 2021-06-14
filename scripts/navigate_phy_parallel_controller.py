@@ -129,7 +129,7 @@ def dist_callback(msg):
 
     current_dist = pose_transformed.pose.position.x
 
-    if (not math.isnan(current_dist)) and current_dist < 1 and current_dist != 0:
+    if (not math.isnan(current_dist)) and current_dist < 0.92 and current_dist != 0:
         print "stop set"
         stop = True
 
@@ -194,7 +194,7 @@ def image_callback(msg):
             # intergral_tilt += (precentage_height - 0.5)
 
             angular_speed.value = porpotion + 0.001 * differential
-            tilt.value = current_head_angle + 1.8 * porpotion_tilt + 0.5 * differential_tilt
+            tilt.value = current_head_angle + 1.5 * porpotion_tilt + 0.5 * differential_tilt
 
             if tilt.value < 0.2:
                 tilt.value = 0.2
